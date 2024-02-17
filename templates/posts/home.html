@@ -7,5 +7,16 @@
 </head>
 <body>
     <h1>Welcome</h1>
+
+    <h2>There are the lasted post</h2>
+
+    <div class="post">
+        {% for post in posts  %}
+        <a href="#">{{post.title}}</a>
+        <p>{{post.body}}</p>
+        {% endfor %}
+
+    </div>
+
 </body>
 </html>
