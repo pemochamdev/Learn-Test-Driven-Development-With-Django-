@@ -2,9 +2,12 @@ from django.test import TestCase
 from django.urls import reverse
 from http import HTTPStatus
 from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import get_user_model
 
 from accounts.forms import UserRegistrationForm
 # Create your tests here.
+
+User = get_user_model()
 
 
 class AccountCreationTest(TestCase):
@@ -41,3 +44,30 @@ class AccountCreationTest(TestCase):
 
         form = self.form_class(sample_data)
         self.assertTrue(form.is_valid())
+    
+
+    def test_signup_form_create_user_in_db(self):
+
+
+        user = {
+            'username':'pmc',
+            'email':'pmc@gmail.com',
+            'password1':'Pmceohamdev#237',
+            'password2':'Pmceohamdev#237'
+        }
+
+        form = self.form_class(user)
+
+        if form.is_valid():
+            form.save()
+        
+        self.assertEqual(User.objects.count(), 1)
+
+
+    def test_login_page_exists(self):
+        
+        url = reverse('login')
+        response = self.client.get(url)
+
+        self.assertTemplateUsed(response,'accounts/login.html')
+        self.assertEqual(response.status_code, HTTPStatus.OK)
