@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 from http import HTTPStatus
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import get_user_model
 
 from accounts.forms import UserRegistrationForm
@@ -64,6 +64,19 @@ class AccountCreationTest(TestCase):
         self.assertEqual(User.objects.count(), 1)
 
 
+class LoginTest(TestCase):
+
+    def setUp(self):
+        self.username = 'pmc'
+        self.email = 'pmc@gmail.com'
+        self.password = 'Pmc#237cmr'
+
+        User.objects.create_user(
+            username = self.username,
+            email = self.email,
+            password = self.password
+        )
+
     def test_login_page_exists(self):
         
         url = reverse('login')
@@ -71,3 +84,24 @@ class AccountCreationTest(TestCase):
 
         self.assertTemplateUsed(response,'accounts/login.html')
         self.assertEqual(response.status_code, HTTPStatus.OK)
+    
+
+    def test_login_page_has_login_form(self):
+        url = reverse('login')
+        response = self.client.get(url)
+
+        form = response.context.get('form')
+
+        self.assertIsInstance(form, AuthenticationForm)
+    
+
+    def test_login_page_logs_in_user(self):
+        user_data = {
+            'username ': self.username,
+            'email ': self.email,
+            'password ': self.password,
+        }
+        url = reverse('login')
+        response = self.client.post(url, user_data)
+
+        self.assertRedirects(response, reverse('home'))
