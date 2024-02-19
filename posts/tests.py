@@ -2,11 +2,19 @@ from django.test import TestCase
 
 # Create your tests here.
 
-from posts.models import Post
-import datetime
-from django.utils import timezone
-from django.contrib.auth import get_user_model
+
 from http import HTTPStatus
+from django.urls import reverse
+from django.utils import timezone
+from django.http.request import HttpRequest
+from django.contrib.auth import get_user_model
+
+
+
+from posts.models import Post
+from posts.forms import PostCreationForm
+
+
 
 """
     le module bakery permet de creer les champs d'un model
@@ -97,3 +105,58 @@ class ModelAuthorTest(TestCase):
     def test_post_belongs_to_user(self):
         self.assertEqual(self.post.author, self.user)
         self.assertTrue(hasattr(self.post, 'author'))
+
+
+class PostCreationTest(TestCase):
+
+
+    def setUp(self):
+
+
+        self.url = reverse('post_creation')
+        self.template_name = 'posts/post_creation.html'
+        self.form_class = PostCreationForm
+
+        self.title = 'Sample Title Test'
+        self.body = 'Sample Body for sample test'
+        self.author = 'author'
+    
+
+    def test_post_creation_page_exists(self):
+        
+
+        response = self.client.get(self.url)
+
+        self.assertTemplateUsed(response, self.template_name)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+
+
+        form = response.context.get('form', None)
+        self.assertIsInstance(form, self.form_class)
+    
+
+    def test_post_creation_form_create_post(self):
+        post_request = HttpRequest()
+        post_request.user = baker.make(User)
+
+
+        post_data = {
+            'title':self.title,
+            'body':self.body,
+            #'author':self.author
+        }
+
+        post_request.POST = post_data
+
+        form = self.form_class(post_request.POST)
+
+        self.assertTrue(form.is_valid())
+
+        post_obj = form.save(commit=False)
+        self.assertIsInstance(post_obj, Post)
+
+        post_obj.author = post_request.user
+        post_obj.save()
+
+        self.assertEqual(Post.objects.count(), 1)
+
